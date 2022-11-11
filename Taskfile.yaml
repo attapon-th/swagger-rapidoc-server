@@ -17,7 +17,7 @@ vars:
     -X '{{.GO_MODULE}}/internal.Version={{.APP_VERSION}}' \
     -X '{{.GO_MODULE}}/internal.Build={{.APP_BUILD}}' \
     -X '{{.GO_MODULE}}/internal.Timestamp={{.APP_TS}}'" \
-  DOCKER_REGISTRY_URL: registry.{{.GO_MODULE}}
+  DOCKER_REGISTRY_URL: attap0n/swagger-server
 
 tasks:
   default:
