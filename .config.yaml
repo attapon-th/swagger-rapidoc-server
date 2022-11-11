@@ -1,0 +1,13 @@
+version: 1.0.0
+app:
+  dev: true
+  domain: localhost
+  listen: localhost # production set: 0.0.0.0
+  prefix: /swaggers
+  port: 8888
+  cpu: 1 # if cpu < 2: fiber.Config.Prefork=false
+  logs:
+    log: console
+    access: storage/logs/access.log
+
+minioCredential: "./credential.json"

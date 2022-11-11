@@ -1,0 +1,76 @@
+# https://taskfile.dev
+
+version: "3"
+
+vars:
+  APP_NAME: myapp
+  APP_VERSION: 1.0.0
+  APP_BUILD:
+    sh: git log -n 1 --format=%h || echo "nogit"
+  APP_TS:
+    sh: git log -n 1 --format=%cI || echo "0000-00-00T00:00:00+07:00"
+  GO_MODULE:
+    sh: go list -m  || echo ""
+  GO_LDFLAGS: |
+    --ldflags=" \
+    -X '{{.GO_MODULE}}/internal.AppName={{.APP_NAME}}' \
+    -X '{{.GO_MODULE}}/internal.Version={{.APP_VERSION}}' \
+    -X '{{.GO_MODULE}}/internal.Build={{.APP_BUILD}}' \
+    -X '{{.GO_MODULE}}/internal.Timestamp={{.APP_TS}}'" \
+  DOCKER_REGISTRY_URL: registry.{{.GO_MODULE}}
+
+tasks:
+  default:
+    cmds:
+      - echo "GO Version - {{.APP_NAME}}"
+      - echo "GO Version - {{.APP_VERSION}}"
+      - echo "GO Module  - {{.APP_BUILD}}"
+      - echo "OS         - {{OS}}"
+      - echo "----------"
+      - task --list-all
+    silent: true
+
+  dev:
+    cmds:
+      - go run {{.GO_LDFLAGS}} main.go serv --config .config.yaml {{.CLI_ARGS}}
+  ver: # increment version
+    cmds:
+      - gosc upver Taskfile.yaml
+  mod:
+    cmds:
+      # - go mod download
+      - go mod tidy
+      - go mod vendor
+      - go mod verify
+
+  build:
+    cmds:
+      - |
+        CGO_ENABLED=0 GOOS=linux go build \
+        -a -installsuffix cgo {{.GO_LDFLAGS}} \
+        -o ./build/{{.APP_NAME}} main.go
+
+  docker-build:
+    cmds:
+      - test -f ./build/{{.APP_NAME}} || task build
+      - docker build --build-arg APPNAME={{.APP_NAME}}  -t {{.DOCKER_REGISTRY_URL}}:latest .
+
+  docker-push:
+    cmds:
+      - docker push {{.DOCKER_REGISTRY_URL}}:latest
+
+  # htpasswd:
+  #   cmds:
+  #     - openssl passwd -apr1 {{.CLI_ARGS}}
+
+  # -- Swagger 2.0 -- #
+  # swag:
+  #   cmds:
+  #     - echo "reference https://github.com/swaggo/swag"
+  #     - swag fmt
+  #     - swag init --ot 'json' --output ./storage/swagger -g _main-dev.go
+
+  # swag-prd:
+  #   cmds:
+  #     - swag fmt
+  #     - swag init --ot 'json' --output ./storage/swagger -g _main-prd.go
